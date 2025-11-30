@@ -7,6 +7,14 @@
 .buildlog/
 .history
 
+# Environment configuration
+.env
+
+# IDE / tooling
+.idea/
+.vscode/
+*.iml
+.metadata
 
 
 # Flutter repo-specific
