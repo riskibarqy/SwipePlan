@@ -17,6 +17,7 @@ dependencies:
   clerk_auth: ^0.0.13-beta
   path_provider: ^2.1.5
   uuid: ^4.5.1
+  google_fonts: ^6.2.1
 
 dev_dependencies:
   flutter_test:

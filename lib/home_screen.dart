@@ -9,91 +9,56 @@ import 'auth/user_session.dart';
 import 'groups/group_context.dart';
 import 'watch_tab.dart';
 import 'theme/app_theme.dart';
+import 'theme/ghibli_decorations.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(gradient: AppGradients.background),
+    return GhibliBackdrop(
       child: DefaultTabController(
         length: 3,
         child: Scaffold(
           backgroundColor: Colors.transparent,
-          appBar: AppBar(
-            title: const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('SwipePlan', style: TextStyle(fontWeight: FontWeight.w700)),
-                SizedBox(height: 4),
-                Text(
-                  'Plan better watch parties together',
-                  style: TextStyle(fontSize: 14, color: Colors.white70),
-                ),
-              ],
-            ),
-            actions: [
-              IconButton.filledTonal(
-                tooltip: 'Groups',
-                onPressed:
-                    () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const GroupScreen()),
-                    ),
-                icon: const Icon(Icons.group),
-              ),
-              const SizedBox(width: 8),
-              IconButton.outlined(
-                tooltip: 'Sign out',
-                onPressed: () async {
-                  final config = context.read<AppConfig>();
-                  if (config.usesSupabaseAuth) {
-                    await Supabase.instance.client.auth.signOut();
-                  } else {
-                    await ClerkAuth.of(context, listen: false).signOut();
-                  }
-                },
-                icon: const Icon(Icons.logout),
-              ),
-              const SizedBox(width: 12),
-            ],
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(64),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(999),
+          body: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _HomeHeader(
+                    onOpenGroups: () async {
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const GroupScreen()),
+                      );
+                    },
+                    onSignOut: () => _signOut(context),
                   ),
-                  child: TabBar(
-                    indicatorSize: TabBarIndicatorSize.tab,
-                    indicator: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    labelColor: Theme.of(context).colorScheme.primary,
-                    unselectedLabelColor: Colors.white70,
-                    tabs: const [
-                      Tab(text: 'Watch'),
-                      Tab(text: 'Trip'),
-                      Tab(text: 'Schedule'),
-                    ],
+                  const SizedBox(height: 18),
+                  const _HeroBanner(),
+                  const SizedBox(height: 20),
+                  const _TabSelector(),
+                  const SizedBox(height: 16),
+                  const Expanded(
+                    child: _TabSurface(child: _HomeTabs()),
                   ),
-                ),
+                ],
               ),
-            ),
-          ),
-          body: const Padding(
-            padding: EdgeInsets.all(20),
-            child: TabBarView(
-              children: [WatchTab(), _TripTab(), _ScheduleTab()],
             ),
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _signOut(BuildContext context) async {
+    final config = context.read<AppConfig>();
+    if (config.usesSupabaseAuth) {
+      await Supabase.instance.client.auth.signOut();
+    } else {
+      await ClerkAuth.of(context, listen: false).signOut();
+    }
   }
 }
 
@@ -123,6 +88,382 @@ class _ScheduleTab extends StatelessWidget {
   }
 }
 
+class _HomeHeader extends StatelessWidget {
+  const _HomeHeader({required this.onOpenGroups, required this.onSignOut});
+
+  final Future<void> Function() onOpenGroups;
+  final Future<void> Function() onSignOut;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final subtitleStyle = theme.textTheme.bodyMedium?.copyWith(
+      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+    );
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('SwipePlan', style: theme.textTheme.headlineSmall),
+              const SizedBox(height: 6),
+              Text('Retro Ghibli watch party atelier', style: subtitleStyle),
+              const SizedBox(height: 8),
+              const Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _MiniBadge(icon: Icons.auto_awesome, label: 'Dreamy cues'),
+                  _MiniBadge(icon: Icons.local_florist, label: 'Slow living'),
+                  _MiniBadge(icon: Icons.handshake, label: 'Crew sync'),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        _HeaderAction(
+          icon: Icons.groups_2_outlined,
+          label: 'Crews',
+          onTap: onOpenGroups,
+        ),
+        const SizedBox(width: 10),
+        _HeaderAction(
+          icon: Icons.logout_rounded,
+          label: 'Exit',
+          onTap: onSignOut,
+        ),
+      ],
+    );
+  }
+}
+
+class _HeaderAction extends StatelessWidget {
+  const _HeaderAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final Future<void> Function() onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = theme.colorScheme.primary;
+    return Material(
+      color: Colors.white.withValues(alpha: 0.25),
+      borderRadius: BorderRadius.circular(24),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(24),
+        onTap: () async {
+          await onTap();
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 20, color: color),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MiniBadge extends StatelessWidget {
+  const _MiniBadge({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: theme.colorScheme.primary),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeroBanner extends StatelessWidget {
+  const _HeroBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final controller = context.watch<WatchController>();
+    final groupId = context.watch<GroupContext>().activeGroupId;
+    final queueValue =
+        controller.queueLength == 0
+            ? 'Empty queue'
+            : '${controller.queueLength} picks';
+    final queueCaption =
+        controller.queueLength == 0
+            ? 'Load a fresh round'
+            : '${controller.remainingCount} left';
+    final progressValue = '${(controller.progress * 100).round()}%';
+    final progressCaption =
+        controller.queueLength == 0
+            ? 'No swipes today'
+            : 'of this dreamy round';
+    final crewLinked = groupId != null;
+
+    final crewValue = crewLinked ? 'Crew synced' : 'Crew needed';
+    final crewCaption =
+        crewLinked
+            ? 'Swipes share automatically'
+            : 'Tap crews to invite friends';
+
+    final metrics = [
+      _HeroMetric(
+        icon: Icons.movie_filter,
+        label: 'Queue',
+        value: queueValue,
+        caption: queueCaption,
+      ),
+      _HeroMetric(
+        icon: Icons.timelapse,
+        label: 'Progress',
+        value: progressValue,
+        caption: progressCaption,
+      ),
+      _HeroMetric(
+        icon: Icons.group_work,
+        label: 'Crew',
+        value: crewValue,
+        caption: crewCaption,
+      ),
+    ];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 24),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFBE5CF), Color(0xFFF3D6CC), Color(0xFFBFDCC8)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(40),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
+        boxShadow: AppShadows.layered,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _MiniBadge(icon: Icons.auto_awesome, label: 'Storyteller mode'),
+              _MiniBadge(icon: Icons.terrain, label: 'Misty valley vibes'),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Curate a cozy film ritual',
+            style: theme.textTheme.headlineSmall,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            crewLinked
+                ? 'You are synced with your crew. Keep swiping until everyone hearts the same title.'
+                : 'Gather your crew to sync votes. Every swipe will feel like pen pals trading tapes.',
+            style: theme.textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 20),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isNarrow = constraints.maxWidth < 640;
+              if (isNarrow) {
+                return Column(
+                  children: [
+                    for (var i = 0; i < metrics.length; i++) ...[
+                      metrics[i],
+                      if (i != metrics.length - 1) const SizedBox(height: 12),
+                    ],
+                  ],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(child: metrics[0]),
+                  const SizedBox(width: 12),
+                  Expanded(child: metrics[1]),
+                  const SizedBox(width: 12),
+                  Expanded(child: metrics[2]),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeroMetric extends StatelessWidget {
+  const _HeroMetric({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.caption,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final String caption;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 20, color: theme.colorScheme.primary),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            caption,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TabSelector extends StatelessWidget {
+  const _TabSelector();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return AuroraGlass(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: TabBar(
+          splashBorderRadius: BorderRadius.circular(999),
+          indicator: BoxDecoration(
+            gradient: AppGradients.accent,
+            borderRadius: BorderRadius.circular(999),
+            boxShadow: [AppShadows.soft],
+          ),
+          labelColor: theme.colorScheme.primary,
+          unselectedLabelColor: theme.colorScheme.primary.withValues(
+            alpha: 0.5,
+          ),
+          tabs: const [
+            Tab(text: 'Watch'),
+            Tab(text: 'Trip'),
+            Tab(text: 'Schedule'),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeTabs extends StatelessWidget {
+  const _HomeTabs();
+
+  @override
+  Widget build(BuildContext context) {
+    return const TabBarView(
+      children: [
+        WatchTab(),
+        _TripTab(),
+        _ScheduleTab(),
+      ],
+    );
+  }
+}
+
+class _TabSurface extends StatelessWidget {
+  const _TabSurface({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final borderRadius = BorderRadius.circular(40);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: AppGradients.surface,
+        borderRadius: borderRadius,
+        border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
+        boxShadow: AppShadows.layered,
+      ),
+      child: ClipRRect(
+        borderRadius: borderRadius,
+        child: Padding(padding: const EdgeInsets.all(20), child: child),
+      ),
+    );
+  }
+}
+
 class _PlaceholderCard extends StatelessWidget {
   const _PlaceholderCard({
     required this.icon,
@@ -140,41 +481,73 @@ class _PlaceholderCard extends StatelessWidget {
         constraints: const BoxConstraints(maxWidth: 420),
         child: DecoratedBox(
           decoration: BoxDecoration(
-            gradient: AppGradients.surface,
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: [
-              BoxShadow(
-                blurRadius: 30,
-                offset: const Offset(0, 24),
-                color: Colors.black.withValues(alpha: 0.1),
+            gradient: const LinearGradient(
+              colors: [Color(0xFFFCEFDA), Color(0xFFF6DDCC), Color(0xFFCFE4D6)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(36),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
+            boxShadow: AppShadows.layered,
+          ),
+          child: Stack(
+            children: [
+              Positioned(
+                bottom: -10,
+                right: -20,
+                child: Container(
+                  width: 140,
+                  height: 140,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.secondary.withValues(alpha: 0.15),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(30),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.primary.withValues(alpha: 0.12),
+                      ),
+                      child: Icon(
+                        icon,
+                        size: 36,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Text(
+                      title,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      subtitle,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, size: 48, color: Theme.of(context).colorScheme.primary),
-                const SizedBox(height: 16),
-                Text(
-                  title,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  subtitle,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.copyWith(color: Colors.black54),
-                ),
-              ],
-            ),
           ),
         ),
       ),
@@ -235,18 +608,17 @@ class _GroupViewState extends State<_GroupView> {
             children: [
               Text(
                 'Coordinate with your crew',
-                style: Theme.of(context)
-                    .textTheme
-                    .headlineSmall
-                    ?.copyWith(color: Colors.white, fontWeight: FontWeight.w600),
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
                 'Create a new group or hop into an existing one with the invite ID.',
-                style:
-                    Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.white70,
-                        ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: Colors.white70),
               ),
               const SizedBox(height: 24),
               _GradientCard(
@@ -255,8 +627,10 @@ class _GroupViewState extends State<_GroupView> {
                   children: [
                     const Text(
                       'Create a group',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     TextField(
@@ -274,9 +648,8 @@ class _GroupViewState extends State<_GroupView> {
                         onPressed:
                             notifier.isLoading
                                 ? null
-                                : () => notifier.createGroup(
-                                      _nameCtrl.text.trim(),
-                                    ),
+                                : () =>
+                                    notifier.createGroup(_nameCtrl.text.trim()),
                         label: const Text('Create group'),
                       ),
                     ),
@@ -290,8 +663,10 @@ class _GroupViewState extends State<_GroupView> {
                   children: [
                     const Text(
                       'Join with an ID',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     TextField(
@@ -310,8 +685,8 @@ class _GroupViewState extends State<_GroupView> {
                             notifier.isLoading
                                 ? null
                                 : () => notifier.joinGroup(
-                                      _groupIdCtrl.text.trim(),
-                                    ),
+                                  _groupIdCtrl.text.trim(),
+                                ),
                         label: const Text('Join group'),
                       ),
                     ),
@@ -361,10 +736,7 @@ class _GradientCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: child,
-      ),
+      child: Padding(padding: const EdgeInsets.all(20), child: child),
     );
   }
 }
