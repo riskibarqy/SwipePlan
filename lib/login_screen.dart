@@ -175,6 +175,20 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ],
                         ),
+                        const SizedBox(height: 14),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            icon: const Icon(Icons.g_mobiledata),
+                            onPressed:
+                                _loading
+                                    ? null
+                                    : () => _handleAuth(
+                                          (facade) => facade.signInWithGoogle(),
+                                        ),
+                            label: const Text('Continue with Google'),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -191,6 +205,7 @@ class _LoginScreenState extends State<LoginScreen> {
 abstract class AuthFacade {
   Future<void> signIn({required String email, required String password});
   Future<void> signUp({required String email, required String password});
+  Future<void> signInWithGoogle();
 }
 
 class SupabaseAuthFacade implements AuthFacade {
@@ -207,5 +222,13 @@ class SupabaseAuthFacade implements AuthFacade {
   @override
   Future<void> signUp({required String email, required String password}) {
     return _client.auth.signUp(email: email, password: password);
+  }
+
+  @override
+  Future<void> signInWithGoogle() async {
+    await _client.auth.signInWithOAuth(
+      OAuthProvider.google,
+      redirectTo: redirectUrl,
+    );
   }
 }

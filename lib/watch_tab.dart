@@ -55,18 +55,31 @@ class WatchTab extends StatelessWidget {
           content = _SwipeCard(item: item, controller: controller);
         }
 
-        return Column(
-          children: [
-            _SwipeOverview(controller: controller),
-            const SizedBox(height: 20),
-            Expanded(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                switchInCurve: Curves.easeOutBack,
-                child: content,
+        final theme = Theme.of(context);
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Swipe', style: theme.textTheme.headlineSmall),
+              const SizedBox(height: 4),
+              Text(
+                'A weekend ritual through scenic stories',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              _SwipeOverview(controller: controller),
+              const SizedBox(height: 18),
+              Expanded(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 400),
+                  child: content,
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -107,170 +120,86 @@ class _SwipeOverview extends StatelessWidget {
     final summary =
         controller.queueLength == 0
             ? 'No items in the queue yet'
-            : '${controller.queueLength} picks · ${controller.remainingCount} remaining';
+            : '${controller.currentPosition}/${controller.queueLength} in rotation';
 
-    return _GhibliCardShell(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 22),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Tonight\'s queue',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(summary, style: theme.textTheme.bodyMedium),
-          const SizedBox(height: 18),
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Swipe energy',
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: theme.colorScheme.secondary,
-                        fontWeight: FontWeight.w600,
-                      ),
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
+        boxShadow: AppShadows.layered,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Queue status',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
                     ),
-                    const SizedBox(height: 8),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: TweenAnimationBuilder<double>(
-                        duration: const Duration(milliseconds: 400),
-                        tween: Tween(begin: 0, end: controller.progress),
-                        builder: (context, value, _) {
-                          return LinearProgressIndicator(
-                            value: value.clamp(0, 1),
-                            minHeight: 8,
-                            backgroundColor: Colors.white.withValues(
-                              alpha: 0.4,
-                            ),
-                            valueColor: AlwaysStoppedAnimation(
-                              theme.colorScheme.primary,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    const Wrap(
-                      spacing: 10,
-                      runSpacing: 8,
-                      children: [
-                        _OverviewPill(
-                          icon: Icons.local_florist,
-                          label: 'Cozy pace',
-                        ),
-                        _OverviewPill(
-                          icon: Icons.terrain,
-                          label: 'Studio magic',
-                        ),
-                        _OverviewPill(icon: Icons.bolt, label: 'Fresh drops'),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 18),
-              SizedBox(
-                width: 96,
-                height: 96,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Container(
-                      width: 96,
-                      height: 96,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: theme.colorScheme.secondary.withValues(
-                          alpha: 0.15,
-                        ),
-                      ),
-                    ),
-                    TweenAnimationBuilder<double>(
-                      duration: const Duration(milliseconds: 500),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(summary, style: theme.textTheme.bodyMedium),
+                  const SizedBox(height: 10),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: TweenAnimationBuilder<double>(
+                      duration: const Duration(milliseconds: 400),
                       tween: Tween(begin: 0, end: controller.progress),
                       builder: (context, value, _) {
-                        return SizedBox(
-                          width: 84,
-                          height: 84,
-                          child: CircularProgressIndicator(
-                            value:
-                                controller.queueLength == 0
-                                    ? 0
-                                    : value.clamp(0, 1),
-                            strokeWidth: 6,
-                            backgroundColor: Colors.white.withValues(
-                              alpha: 0.35,
-                            ),
-                            valueColor: AlwaysStoppedAnimation(
-                              theme.colorScheme.primary,
-                            ),
+                        return LinearProgressIndicator(
+                          value: value.clamp(0, 1),
+                          minHeight: 8,
+                          backgroundColor: Colors.black.withValues(alpha: 0.05),
+                          valueColor: AlwaysStoppedAnimation(
+                            theme.colorScheme.primary,
                           ),
                         );
                       },
                     ),
-                    Text(
-                      '${(controller.progress * 100).round()}%',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _OverviewPill extends StatelessWidget {
-  const _OverviewPill({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.35),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: theme.colorScheme.primary),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.primary,
-              fontWeight: FontWeight.w600,
             ),
-          ),
-        ],
+            const SizedBox(width: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  controller.queueLength == 0
+                      ? '—'
+                      : '${(controller.progress * 100).round()}%',
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  controller.queueLength == 0
+                      ? 'Load picks'
+                      : '${controller.remainingCount} left',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
 class _GhibliCardShell extends StatelessWidget {
-  const _GhibliCardShell({required this.child, this.padding, this.gradient});
+  const _GhibliCardShell({required this.child, this.gradient});
 
   final Widget child;
-  final EdgeInsetsGeometry? padding;
   final Gradient? gradient;
 
   @override
@@ -282,10 +211,7 @@ class _GhibliCardShell extends StatelessWidget {
         border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
         boxShadow: AppShadows.layered,
       ),
-      child: Padding(
-        padding: padding ?? const EdgeInsets.all(28),
-        child: child,
-      ),
+      child: Padding(padding: const EdgeInsets.all(28), child: child),
     );
   }
 }
@@ -403,134 +329,193 @@ class _SwipeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final imageUrl = 'https://picsum.photos/seed/${item.id}/700/900';
+    final total = controller.queueLength == 0 ? 1 : controller.queueLength;
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 540),
-        child: _GhibliCardShell(
-          gradient: const LinearGradient(
-            colors: [Color(0xFFFFF0E1), Color(0xFFF0D8D0), Color(0xFFCBE1D2)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomRight,
-          ),
-          child: Stack(
-            children: [
-              Positioned(
-                top: -40,
-                right: -20,
-                child: Container(
-                  width: 140,
-                  height: 140,
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                DecoratedBox(
                   decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.secondary.withValues(alpha: 0.18),
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(36),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.35),
+                    ),
+                    boxShadow: AppShadows.layered,
                   ),
-                ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.primary.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Text(
-                        'New suggestion',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.primary,
-                          fontWeight: FontWeight.w600,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ClipRRect(
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(36),
+                          topRight: Radius.circular(36),
+                        ),
+                        child: AspectRatio(
+                          aspectRatio: 3 / 4,
+                          child: Image.network(
+                            imageUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder:
+                                (_, __, ___) => Container(
+                                  decoration: const BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        Color(0xFFC2CEBF),
+                                        Color(0xFFE7D7C8),
+                                      ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                  ),
+                                ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  Text(
-                    item.title,
-                    textAlign: TextAlign.left,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    item.description.isEmpty
-                        ? 'No description available yet. Add a blurb so your crew knows the vibe.'
-                        : item.description,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withValues(alpha: 0.8),
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 8,
-                    children: _buildHighlightChips(item.description),
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _SwipeButton(
-                        label: 'Skip',
-                        icon: Icons.close_rounded,
-                        color: Theme.of(context).colorScheme.secondary,
-                        onPressed: controller.skipCurrent,
-                      ),
-                      const SizedBox(width: 16),
-                      _SwipeButton(
-                        label: 'Save it',
-                        icon: Icons.favorite,
-                        color: Theme.of(context).colorScheme.primary,
-                        filled: true,
-                        onPressed: () async {
-                          final title = item.title;
-                          try {
-                            final matched = await controller.likeCurrent();
-                            if (!context.mounted || !matched) return;
-                            showDialog(
-                              context: context,
-                              builder:
-                                  (_) => AlertDialog(
-                                    title: const Text("It's a match!"),
-                                    content: Text("You matched on '$title'."),
-                                    actions: [
-                                      TextButton(
-                                        onPressed:
-                                            () => Navigator.of(context).pop(),
-                                        child: const Text('Love it'),
-                                      ),
-                                    ],
-                                  ),
-                            );
-                          } catch (_) {
-                            if (!context.mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Failed to record swipe'),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(22),
+                        decoration: const BoxDecoration(
+                          color: AppPalette.parchment,
+                          borderRadius: BorderRadius.only(
+                            bottomLeft: Radius.circular(36),
+                            bottomRight: Radius.circular(36),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item.title,
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.w700,
                               ),
-                            );
-                          }
-                        },
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              item.description.isEmpty
+                                  ? 'No description available yet. Add a blurb so your crew knows the vibe.'
+                                  : item.description,
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                color: theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.8,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            Wrap(
+                              spacing: 10,
+                              runSpacing: 8,
+                              children: _buildHighlightChips(item.description),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
-                ],
-              ),
-            ],
-          ),
+                ),
+                Positioned(
+                  top: 16,
+                  right: 16,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary,
+                      borderRadius: BorderRadius.circular(22),
+                      boxShadow: [AppShadows.soft],
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.place, size: 16, color: Colors.white),
+                        SizedBox(width: 6),
+                        Text(
+                          'Trip',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 16,
+                  left: 16,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.85),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Text(
+                      '${controller.currentPosition}/$total',
+                      style: theme.textTheme.labelMedium,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 22),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _SwipeButton(
+                  label: 'Skip',
+                  icon: Icons.close_rounded,
+                  color: theme.colorScheme.secondary,
+                  onPressed: controller.skipCurrent,
+                ),
+                const SizedBox(width: 16),
+                _SwipeButton(
+                  label: 'Save it',
+                  icon: Icons.favorite,
+                  color: theme.colorScheme.primary,
+                  filled: true,
+                  onPressed: () async {
+                    final title = item.title;
+                    try {
+                      final matched = await controller.likeCurrent();
+                      if (!context.mounted || !matched) return;
+                      showDialog(
+                        context: context,
+                        builder:
+                            (_) => AlertDialog(
+                              title: const Text("It's a match!"),
+                              content: Text("You matched on '$title'."),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(context).pop(),
+                                  child: const Text('Love it'),
+                                ),
+                              ],
+                            ),
+                      );
+                    } catch (_) {
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Failed to record swipe')),
+                      );
+                    }
+                  },
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -657,6 +642,13 @@ class WatchController extends ChangeNotifier {
   int get remainingCount =>
       math.max(_items.length - _index - (currentItem == null ? 0 : 1), 0);
   int get queueLength => _items.length;
+  int get currentPosition {
+    if (_items.isEmpty) return 0;
+    return currentItem == null
+        ? _items.length
+        : math.min(_index + 1, _items.length);
+  }
+
   double get progress =>
       _items.isEmpty ? 0 : (_index / _items.length).clamp(0.0, 1.0);
   WatchItem? get currentItem =>

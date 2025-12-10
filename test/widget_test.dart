@@ -8,6 +8,7 @@ class _FakeAuthFacade implements AuthFacade {
   String? lastPassword;
   bool signInCalled = false;
   bool signUpCalled = false;
+  bool signInWithGoogleCalled = false;
 
   @override
   Future<void> signIn({required String email, required String password}) async {
@@ -21,6 +22,11 @@ class _FakeAuthFacade implements AuthFacade {
     signUpCalled = true;
     lastEmail = email;
     lastPassword = password;
+  }
+
+  @override
+  Future<void> signInWithGoogle() async {
+    signInWithGoogleCalled = true;
   }
 }
 
